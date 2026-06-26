@@ -3,6 +3,7 @@ package main
 import (
 	"task-tracker/config"
 	"task-tracker/database"
+	"task-tracker/internal/middleware"
 	"task-tracker/internal/task/handler"
 	"task-tracker/internal/task/repository"
 	"task-tracker/internal/task/routes"
@@ -33,6 +34,7 @@ func main() {
 	})
 
 	api := r.Group("/api")
+	api.Use(middleware.ApiKeyAuth(cfg.APIKey))
 	routes.SetupTaskRoutes(api, taskHandler)
 
 	log.Info("server starting", zap.String("port", cfg.Port))

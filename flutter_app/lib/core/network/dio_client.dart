@@ -11,6 +11,7 @@ final dioProvider = Provider<Dio>((ref) {
     headers: {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
+      'X-API-Key': ApiConstants.apiKey,
     },
   ));
 

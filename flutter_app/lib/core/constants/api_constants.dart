@@ -6,4 +6,5 @@ class ApiConstants {
   static const String tasks = '/tasks';
   static Duration get timeout =>
       Duration(seconds: int.parse(dotenv.get('TIMEOUT', fallback: '30')));
+  static String get apiKey => dotenv.get('API_KEY', fallback: '');
 }

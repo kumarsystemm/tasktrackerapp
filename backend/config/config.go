@@ -14,6 +14,7 @@ type Config struct {
 	DBPassword string
 	DBName     string
 	DBSSLMode  string
+	APIKey     string
 }
 
 func Load() *Config {
@@ -27,6 +28,7 @@ func Load() *Config {
 		DBPassword: getEnv("DB_PASSWORD", "postgres"),
 		DBName:     getEnv("DB_NAME", "task_tracker"),
 		DBSSLMode:  getEnv("DB_SSL_MODE", "disable"),
+		APIKey:     getEnv("API_KEY", "task-tracker-secret-key-2024"),
 	}
 }
 
