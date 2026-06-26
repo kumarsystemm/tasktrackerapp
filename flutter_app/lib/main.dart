@@ -5,13 +5,18 @@ import 'package:task_tracker/core/theme/app_theme.dart';
 import 'package:task_tracker/core/theme/theme_provider.dart';
 import 'package:task_tracker/features/task/presentation/pages/add_task_page.dart';
 import 'package:task_tracker/features/task/presentation/pages/edit_task_page.dart';
+import 'package:task_tracker/features/task/presentation/pages/splash_page.dart';
 import 'package:task_tracker/features/task/presentation/pages/task_detail_page.dart';
 import 'package:task_tracker/features/task/presentation/pages/task_list_page.dart';
 import 'package:go_router/go_router.dart';
 
 final goRouter = GoRouter(
-  initialLocation: '/',
+  initialLocation: '/splash',
   routes: [
+    GoRoute(
+      path: '/splash',
+      builder: (context, state) => const SplashPage(),
+    ),
     GoRoute(
       path: '/',
       builder: (context, state) => TaskListPage(),
@@ -39,7 +44,7 @@ final goRouter = GoRouter(
 
 Future<void> main() async {
   await dotenv.load();
-  runApp(ProviderScope(child: MyApp()));
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends ConsumerWidget {
