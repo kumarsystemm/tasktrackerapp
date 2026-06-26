@@ -166,6 +166,79 @@ User dapat mengubah status menjadi:
 
 ---
 
+## FR-05 Search Task
+
+User dapat mencari task berdasarkan kata kunci.
+
+* Search bar di halaman Task List
+* Real-time search dengan debounce 300ms
+* Mencari berdasarkan title dan description
+* Clear button untuk menghapus search
+
+---
+
+## FR-06 Filter Task
+
+User dapat memfilter task berdasarkan status.
+
+* Filter chips: Semua, Pending, Done
+* Default: Semua (tidak ada filter)
+* Bisa dikombinasikan dengan search
+
+---
+
+## FR-07 Delete Task
+
+User dapat menghapus task.
+
+* Delete button di Task Detail page
+* Swipe-to-delete di Task List
+* Konfirmasi dialog sebelum delete
+* Snackbar notifikasi setelah delete
+
+---
+
+## FR-08 Edit Task
+
+User dapat mengedit title dan description task.
+
+* Edit button di Task Detail page
+* Form pre-fill dengan data existing
+* Validasi sama seperti Add Task
+* Kembali ke Task Detail setelah edit
+
+---
+
+## FR-09 Pagination
+
+Task di-load per halaman.
+
+* Server-side pagination
+* Default 10 task per halaman
+* Info "Menampilkan X dari Y task"
+
+---
+
+## FR-10 Infinite Scroll
+
+Task di-load otomatis saat scroll.
+
+* Otomatis load halaman berikutnya saat scroll mendekati akhir
+* Loading indicator di bawah list
+* Stop loading saat semua data sudah di-load
+
+---
+
+## FR-11 Dark Mode
+
+User dapat menggunakan dark mode.
+
+* Toggle di AppBar
+* Persist pilihan dengan SharedPreferences
+* Light theme dan dark theme
+
+---
+
 # 6. Non Functional Requirements
 
 ## Performance
@@ -214,9 +287,13 @@ Menampilkan logo aplikasi selama inisialisasi.
 Menampilkan:
 
 * App Bar
+* Search Bar
+* Filter Chips
 * List Task
 * Floating Action Button
 * Pull To Refresh
+* Infinite Scroll
+* Dark Mode Toggle
 
 ---
 
@@ -238,6 +315,8 @@ Komponen:
 * Description
 * Status Badge
 * Toggle Status Button
+* Edit Button
+* Delete Button
 
 ---
 
@@ -263,6 +342,13 @@ Task List
 
 Mengambil seluruh task.
 
+Query Parameters:
+
+* search (optional): Kata kunci pencarian
+* status (optional): Filter status (pending/done)
+* page (optional): Halaman (default: 1)
+* limit (optional): Jumlah per halaman (default: 10)
+
 ---
 
 ## GET
@@ -278,6 +364,22 @@ Mengambil detail task.
 /api/tasks
 
 Membuat task baru.
+
+---
+
+## PUT
+
+/api/tasks/{id}
+
+Mengupdate task (title & description).
+
+---
+
+## DELETE
+
+/api/tasks/{id}
+
+Menghapus task.
 
 ---
 
@@ -534,17 +636,48 @@ database/
 
 ---
 
-# 20. Future Improvements
+# 20. Implemented Features (v1.1)
+
+## Search Task
+- Real-time search dengan debounce 300ms
+- Mencari berdasarkan title dan description
+- Clear button untuk menghapus search
+
+## Filter Task
+- Filter berdasarkan status: Semua, Pending, Done
+- Bisa dikombinasikan dengan search
+
+## Delete Task
+- Delete dengan konfirmasi dialog
+- Swipe-to-delete di task list
+- Snackbar notifikasi
+
+## Edit Task
+- Edit title dan description
+- Pre-fill form dengan data existing
+- Validasi sama seperti add task
+
+## Pagination
+- Server-side pagination
+- Default 10 task per halaman
+- Info "Menampilkan X dari Y task"
+
+## Infinite Scroll
+- Otomatis load halaman berikutnya saat scroll
+- Loading indicator di bawah list
+- Pull to refresh
+
+## Dark Mode
+- Toggle tema terang/gelap
+- Persist pilihan dengan SharedPreferences
+- Ikuti sistem theme
+
+---
+
+# 21. Future Improvements
 
 * Authentication
-* Search Task
-* Filter Task
-* Delete Task
-* Edit Task
-* Pagination
-* Infinite Scroll
 * Push Notification
-* Dark Mode
 * Multi User
 * Attachments
 
@@ -559,6 +692,20 @@ database/
 ✅ User dapat melihat detail task
 
 ✅ User dapat mengubah status
+
+✅ User dapat mencari task
+
+✅ User dapat memfilter task berdasarkan status
+
+✅ User dapat menghapus task
+
+✅ User dapat mengedit task
+
+✅ Task di-load dengan pagination
+
+✅ Task di-load dengan infinite scroll
+
+✅ User dapat menggunakan dark mode
 
 ✅ Seluruh data berasal dari REST API
 
