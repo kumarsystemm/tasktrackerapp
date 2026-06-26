@@ -38,6 +38,9 @@ class PaginatedTasksResponse with _$PaginatedTasksResponse {
 
   factory PaginatedTasksResponse.fromJson(Map<String, dynamic> json) {
     final data = json['data'] as Map<String, dynamic>;
-    return _$PaginatedTasksResponseFromJson(data);
+    return PaginatedTasksResponse(
+      tasks: (data['tasks'] as List).map((e) => Task.fromJson(e as Map<String, dynamic>)).toList(),
+      pagination: PaginationMeta.fromJson(data['pagination'] as Map<String, dynamic>),
+    );
   }
 }
