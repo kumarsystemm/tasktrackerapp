@@ -31,7 +31,7 @@ func (h *TaskHandler) Create(c *gin.Context) {
 		return
 	}
 
-	task, err := h.service.Create(req)
+	task, err := h.service.Create(c.Request.Context(), req)
 	if err != nil {
 		h.logger.Error("failed to create task", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -59,7 +59,7 @@ func (h *TaskHandler) GetAll(c *gin.Context) {
 		return
 	}
 
-	result, err := h.service.GetAll(query)
+	result, err := h.service.GetAll(c.Request.Context(), query)
 	if err != nil {
 		h.logger.Error("failed to get tasks", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -86,7 +86,7 @@ func (h *TaskHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	task, err := h.service.GetByID(id)
+	task, err := h.service.GetByID(c.Request.Context(), id)
 	if err != nil {
 		if errors.Is(err, service.ErrTaskNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{
@@ -130,7 +130,7 @@ func (h *TaskHandler) Update(c *gin.Context) {
 		return
 	}
 
-	task, err := h.service.Update(id, req)
+	task, err := h.service.Update(c.Request.Context(), id, req)
 	if err != nil {
 		if errors.Is(err, service.ErrTaskNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{
@@ -164,7 +164,7 @@ func (h *TaskHandler) Delete(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.Delete(id); err != nil {
+	if err := h.service.Delete(c.Request.Context(), id); err != nil {
 		if errors.Is(err, service.ErrTaskNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{
 				"success": false,
@@ -207,7 +207,7 @@ func (h *TaskHandler) UpdateStatus(c *gin.Context) {
 		return
 	}
 
-	task, err := h.service.UpdateStatus(id, req)
+	task, err := h.service.UpdateStatus(c.Request.Context(), id, req)
 	if err != nil {
 		if errors.Is(err, service.ErrTaskNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{

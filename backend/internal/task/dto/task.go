@@ -1,5 +1,7 @@
 package dto
 
+import "task-tracker/internal/task/model"
+
 type CreateTaskRequest struct {
 	Title       string `json:"title" binding:"required,max=255"`
 	Description string `json:"description" binding:"required"`
@@ -29,6 +31,6 @@ type PaginationMeta struct {
 }
 
 type PaginatedTasksResponse struct {
-	Tasks      interface{}    `json:"tasks"`
+	Tasks      []model.Task  `json:"tasks"`
 	Pagination PaginationMeta `json:"pagination"`
 }
