@@ -19,6 +19,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.25'
+          cache-dependency-path: backend/go.sum
       - run: go vet ./...
 
   go-test:
@@ -32,6 +33,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.25'
+          cache-dependency-path: backend/go.sum
       - run: go test ./... -v
 
   go-build:
@@ -46,6 +48,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.25'
+          cache-dependency-path: backend/go.sum
       - run: CGO_ENABLED=0 go build -o main ./cmd/main.go
 
   docker-build:
@@ -60,6 +63,9 @@ jobs:
   flutter-analyze:
     name: Flutter Analyze
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: flutter_app
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
@@ -71,6 +77,9 @@ jobs:
   flutter-test:
     name: Flutter Test
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: flutter_app
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
@@ -83,6 +92,9 @@ jobs:
     name: Flutter Build APK
     runs-on: ubuntu-latest
     needs: [flutter-analyze, flutter-test]
+    defaults:
+      run:
+        working-directory: flutter_app
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
@@ -93,4 +105,4 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: apk-release
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: flutter_app/build/app/outputs/flutter-apk/app-release.apk
