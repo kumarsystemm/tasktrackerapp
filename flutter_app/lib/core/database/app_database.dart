@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:task_tracker/api/models/task.dart' as api;
@@ -18,8 +19,9 @@ class AppDatabase {
 
     return openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _createDB,
+      onUpgrade: _upgradeDB,
     );
   }
 
@@ -34,7 +36,35 @@ class AppDatabase {
         updated_at TEXT NOT NULL
       )
     ''');
+
+    await db.execute('''
+      CREATE TABLE sync_queue (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        operation TEXT NOT NULL,
+        entity_id TEXT,
+        temp_id TEXT,
+        payload TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      )
+    ''');
   }
+
+  static Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS sync_queue (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          operation TEXT NOT NULL,
+          entity_id TEXT,
+          temp_id TEXT,
+          payload TEXT NOT NULL,
+          created_at TEXT NOT NULL
+        )
+      ''');
+    }
+  }
+
+  // --- Task CRUD ---
 
   static Future<void> insertTask(api.Task task) async {
     final db = await database;
@@ -122,5 +152,44 @@ class AppDatabase {
   static Future<void> clearAll() async {
     final db = await database;
     await db.delete('tasks');
+  }
+
+  // --- Sync Queue ---
+
+  static Future<void> addToSyncQueue({
+    required String operation,
+    String? entityId,
+    String? tempId,
+    required Map<String, dynamic> payload,
+  }) async {
+    final db = await database;
+    await db.insert('sync_queue', {
+      'operation': operation,
+      'entity_id': entityId,
+      'temp_id': tempId,
+      'payload': jsonEncode(payload),
+      'created_at': DateTime.now().toIso8601String(),
+    });
+  }
+
+  static Future<List<Map<String, dynamic>>> getSyncQueue() async {
+    final db = await database;
+    return db.query('sync_queue', orderBy: 'id ASC');
+  }
+
+  static Future<void> removeSyncQueueItem(int id) async {
+    final db = await database;
+    await db.delete('sync_queue', where: 'id = ?', whereArgs: [id]);
+  }
+
+  static Future<int> getSyncQueueCount() async {
+    final db = await database;
+    final result = await db.rawQuery('SELECT COUNT(*) as count FROM sync_queue');
+    return result.first['count'] as int;
+  }
+
+  static Future<void> clearSyncQueue() async {
+    final db = await database;
+    await db.delete('sync_queue');
   }
 }

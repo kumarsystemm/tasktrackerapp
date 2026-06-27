@@ -1,4 +1,7 @@
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:task_tracker/api/models/task.dart' as api;
+import 'package:task_tracker/api/models/task_status.dart' as api_status;
 import 'package:task_tracker/core/database/app_database.dart';
 import 'package:task_tracker/core/errors/failures.dart';
 import 'package:task_tracker/core/errors/result.dart';
@@ -52,7 +55,7 @@ class TaskRepositoryImpl implements TaskRepository {
             ),
           ),);
         } catch (_) {
-          return Result.failure(const CacheFailure());
+          return Result.failure(const NetworkFailure());
         }
       }
       return Result.failure(mapExceptionToFailure(e));
@@ -73,7 +76,7 @@ class TaskRepositoryImpl implements TaskRepository {
             return Result.success(TaskMapper.toEntity(localTask));
           }
         } catch (_) {
-          return Result.failure(const CacheFailure());
+          return Result.failure(const NetworkFailure());
         }
       }
       return Result.failure(mapExceptionToFailure(e));
@@ -93,6 +96,9 @@ class TaskRepositoryImpl implements TaskRepository {
       await AppDatabase.insertTask(task);
       return Result.success(TaskMapper.toEntity(task));
     } catch (e) {
+      if (await _connectivity.checkStatus() == ConnectivityStatus.offline) {
+        return _createTaskOffline(title: title, description: description);
+      }
       return Result.failure(mapExceptionToFailure(e));
     }
   }
@@ -112,6 +118,9 @@ class TaskRepositoryImpl implements TaskRepository {
       await AppDatabase.updateTask(task);
       return Result.success(TaskMapper.toEntity(task));
     } catch (e) {
+      if (await _connectivity.checkStatus() == ConnectivityStatus.offline) {
+        return _updateTaskOffline(id: id, title: title, description: description);
+      }
       return Result.failure(mapExceptionToFailure(e));
     }
   }
@@ -123,6 +132,9 @@ class TaskRepositoryImpl implements TaskRepository {
       await AppDatabase.deleteTask(id);
       return Result.success(null);
     } catch (e) {
+      if (await _connectivity.checkStatus() == ConnectivityStatus.offline) {
+        return _deleteTaskOffline(id);
+      }
       return Result.failure(mapExceptionToFailure(e));
     }
   }
@@ -140,7 +152,100 @@ class TaskRepositoryImpl implements TaskRepository {
       await AppDatabase.updateTask(task);
       return Result.success(TaskMapper.toEntity(task));
     } catch (e) {
+      if (await _connectivity.checkStatus() == ConnectivityStatus.offline) {
+        return _updateTaskStatusOffline(id: id, status: status);
+      }
       return Result.failure(mapExceptionToFailure(e));
     }
+  }
+
+  // --- Offline helpers ---
+
+  Future<Result<TaskEntity>> _createTaskOffline({
+    required String title,
+    required String description,
+  }) async {
+    final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
+    final now = DateTime.now();
+
+    // Create a local api.Task to insert into DB.
+    final localTask = api.Task(
+      id: tempId,
+      title: title,
+      description: description,
+      status: api_status.TaskStatus.pending,
+      createdAt: now,
+      updatedAt: now,
+    );
+
+    await AppDatabase.insertTask(localTask);
+    await AppDatabase.addToSyncQueue(
+      operation: 'create',
+      tempId: tempId,
+      payload: {'title': title, 'description': description},
+    );
+
+    return Result.success(TaskMapper.toEntity(localTask));
+  }
+
+  Future<Result<TaskEntity>> _updateTaskOffline({
+    required String id,
+    required String title,
+    required String description,
+  }) async {
+    final existing = await AppDatabase.getTaskById(id);
+    if (existing == null) {
+      return Result.failure(const NotFoundFailure());
+    }
+
+    final updated = existing.copyWith(
+      title: title,
+      description: description,
+      updatedAt: DateTime.now(),
+    );
+
+    await AppDatabase.updateTask(updated);
+    await AppDatabase.addToSyncQueue(
+      operation: 'update',
+      entityId: id,
+      payload: {'title': title, 'description': description},
+    );
+
+    return Result.success(TaskMapper.toEntity(updated));
+  }
+
+  Future<Result<void>> _deleteTaskOffline(String id) async {
+    await AppDatabase.deleteTask(id);
+    await AppDatabase.addToSyncQueue(
+      operation: 'delete',
+      entityId: id,
+      payload: {},
+    );
+
+    return Result.success(null);
+  }
+
+  Future<Result<TaskEntity>> _updateTaskStatusOffline({
+    required String id,
+    required TaskStatus status,
+  }) async {
+    final existing = await AppDatabase.getTaskById(id);
+    if (existing == null) {
+      return Result.failure(const NotFoundFailure());
+    }
+
+    final updated = existing.copyWith(
+      status: api_status.TaskStatus.fromJson(status.value),
+      updatedAt: DateTime.now(),
+    );
+
+    await AppDatabase.updateTask(updated);
+    await AppDatabase.addToSyncQueue(
+      operation: 'update_status',
+      entityId: id,
+      payload: {'status': status.value},
+    );
+
+    return Result.success(TaskMapper.toEntity(updated));
   }
 }
