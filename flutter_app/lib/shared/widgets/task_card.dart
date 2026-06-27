@@ -1,48 +1,42 @@
 import 'package:flutter/material.dart';
-import 'package:task_tracker/features/task/data/models/task_model.dart';
+import 'package:task_tracker/features/task/domain/entities/task_entity.dart';
 
 class TaskCard extends StatelessWidget {
-  final Task task;
-  final VoidCallback onTap;
-  final VoidCallback onDelete;
-  final Function(String) onStatusChanged;
 
   const TaskCard({
-    super.key,
-    required this.task,
-    required this.onTap,
-    required this.onDelete,
-    required this.onStatusChanged,
+    required this.task, required this.onTap, required this.onDelete, required this.onStatusChanged, super.key,
   });
+  final TaskEntity task;
+  final VoidCallback onTap;
+  final VoidCallback onDelete;
+  final void Function(TaskStatus) onStatusChanged;
 
   @override
   Widget build(BuildContext context) {
-    final isDone = task.status == 'done';
-
     return Dismissible(
       key: Key(task.id),
       direction: DismissDirection.endToStart,
       background: Container(
         alignment: Alignment.centerRight,
-        padding: EdgeInsets.only(right: 20),
+        padding: const EdgeInsets.only(right: 20),
         color: Colors.red,
-        child: Icon(Icons.delete, color: Colors.white),
+        child: const Icon(Icons.delete, color: Colors.white),
       ),
       confirmDismiss: (direction) async {
-        return await showDialog(
+        return showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: Text('Hapus Task'),
-            content: Text('Apakah Anda yakin ingin menghapus task ini?'),
+            title: const Text('Hapus Task'),
+            content: const Text('Apakah Anda yakin ingin menghapus task ini?'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: Text('Batal'),
+                child: const Text('Batal'),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context, true),
                 style: TextButton.styleFrom(foregroundColor: Colors.red),
-                child: Text('Hapus'),
+                child: const Text('Hapus'),
               ),
             ],
           ),
@@ -50,12 +44,12 @@ class TaskCard extends StatelessWidget {
       },
       onDismissed: (_) => onDelete(),
       child: Card(
-        margin: EdgeInsets.only(bottom: 12),
+        margin: const EdgeInsets.only(bottom: 12),
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),
           child: Padding(
-            padding: EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
             child: Row(
               children: [
                 Expanded(
@@ -67,12 +61,12 @@ class TaskCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          decoration: isDone ? TextDecoration.lineThrough : null,
+                          decoration: task.isDone ? TextDecoration.lineThrough : null,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      SizedBox(height: 4),
+                      const SizedBox(height: 4),
                       Text(
                         task.description,
                         style: TextStyle(
@@ -82,17 +76,17 @@ class TaskCard extends StatelessWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      SizedBox(height: 8),
+                      const SizedBox(height: 8),
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: isDone ? Colors.green.shade100 : Colors.orange.shade100,
+                          color: task.isDone ? Colors.green.shade100 : Colors.orange.shade100,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          isDone ? 'Done' : 'Pending',
+                          task.isDone ? 'Done' : 'Pending',
                           style: TextStyle(
-                            color: isDone ? Colors.green.shade700 : Colors.orange.shade700,
+                            color: task.isDone ? Colors.green.shade700 : Colors.orange.shade700,
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
@@ -102,9 +96,9 @@ class TaskCard extends StatelessWidget {
                   ),
                 ),
                 Checkbox(
-                  value: isDone,
+                  value: task.isDone,
                   onChanged: (value) {
-                    onStatusChanged(value! ? 'done' : 'pending');
+                    onStatusChanged(value! ? TaskStatus.done : TaskStatus.pending);
                   },
                   activeColor: Colors.green,
                 ),

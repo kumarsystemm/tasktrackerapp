@@ -27,18 +27,18 @@ class _SplashPageState extends State<SplashPage>
       duration: const Duration(milliseconds: 800),
     );
 
-    _scaleAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
+    _scaleAnimation = Tween<double>(begin: 0.5, end: 1).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
     );
 
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+    _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.0, 0.6, curve: Curves.easeIn),
+        curve: const Interval(0, 0.6, curve: Curves.easeIn),
       ),
     );
 
-    _textFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+    _textFadeAnimation = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(
         parent: _controller,
         curve: const Interval(0.3, 0.8, curve: Curves.easeIn),

@@ -7,11 +7,11 @@ final themeProvider = StateNotifierProvider<ThemeNotifier, ThemeMode>((ref) {
 });
 
 class ThemeNotifier extends StateNotifier<ThemeMode> {
-  static const String _themeKey = 'theme_mode';
 
   ThemeNotifier() : super(ThemeMode.system) {
     _loadTheme();
   }
+  static const String _themeKey = 'theme_mode';
 
   Future<void> _loadTheme() async {
     final prefs = await SharedPreferences.getInstance();

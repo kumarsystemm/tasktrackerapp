@@ -1,19 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:task_tracker/features/task/data/models/task_model.dart';
-import 'package:task_tracker/features/task/data/repositories/task_repository_impl.dart';
+import 'package:task_tracker/core/errors/failures.dart';
+import 'package:task_tracker/features/task/domain/entities/task_entity.dart';
+import 'package:task_tracker/features/task/presentation/providers/task_provider.dart';
 import 'package:task_tracker/shared/widgets/loading_widget.dart';
 
-final taskDetailProvider = FutureProvider.autoDispose.family<Task, String>((ref, id) async {
-  final repository = ref.watch(taskRepositoryProvider);
-  return repository.getTaskById(id);
-});
-
 class TaskDetailPage extends ConsumerWidget {
-  final String taskId;
 
-  const TaskDetailPage({super.key, required this.taskId});
+  const TaskDetailPage({required this.taskId, super.key});
+  final String taskId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -21,45 +17,43 @@ class TaskDetailPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Detail Task'),
+        title: const Text('Detail Task'),
         actions: [
           taskAsync.when(
             data: (task) => Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
-                  icon: Icon(Icons.edit),
+                  icon: const Icon(Icons.edit),
                   onPressed: () => context.push('/edit-task/$taskId').then((_) {
                     ref.invalidate(taskDetailProvider(taskId));
                   }),
                 ),
                 IconButton(
-                  icon: Icon(Icons.delete, color: Colors.red),
+                  icon: const Icon(Icons.delete, color: Colors.red),
                   onPressed: () => _showDeleteDialog(context, ref, task),
                 ),
               ],
             ),
-            loading: () => SizedBox(),
-            error: (_, __) => SizedBox(),
+            loading: () => const SizedBox(),
+            error: (_, __) => const SizedBox(),
           ),
         ],
       ),
       body: taskAsync.when(
         data: (task) => _buildContent(context, ref, task),
-        loading: () => Center(child: CircularProgressIndicator()),
+        loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => ErrorState(
-          message: error.toString(),
+          message: _mapErrorToMessage(error),
           onRetry: () => ref.invalidate(taskDetailProvider(taskId)),
         ),
       ),
     );
   }
 
-  Widget _buildContent(BuildContext context, WidgetRef ref, Task task) {
-    final isDone = task.status == 'done';
-
+  Widget _buildContent(BuildContext context, WidgetRef ref, TaskEntity task) {
     return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -68,29 +62,29 @@ class TaskDetailPage extends ConsumerWidget {
               Expanded(
                 child: Text(
                   task.title,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: isDone ? Colors.green.shade100 : Colors.orange.shade100,
+                  color: task.isDone ? Colors.green.shade100 : Colors.orange.shade100,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Text(
-                  isDone ? 'Done' : 'Pending',
+                  task.isDone ? 'Done' : 'Pending',
                   style: TextStyle(
-                    color: isDone ? Colors.green.shade700 : Colors.orange.shade700,
+                    color: task.isDone ? Colors.green.shade700 : Colors.orange.shade700,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
             ],
           ),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
           Text(
             'Deskripsi',
             style: TextStyle(
@@ -99,12 +93,12 @@ class TaskDetailPage extends ConsumerWidget {
               color: Colors.grey.shade600,
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             task.description,
-            style: TextStyle(fontSize: 16, height: 1.5),
+            style: const TextStyle(fontSize: 16, height: 1.5),
           ),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
           Text(
             'Dibuat',
             style: TextStyle(
@@ -113,12 +107,12 @@ class TaskDetailPage extends ConsumerWidget {
               color: Colors.grey.shade600,
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             _formatDate(task.createdAt),
-            style: TextStyle(fontSize: 14),
+            style: const TextStyle(fontSize: 14),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             'Terakhir diupdate',
             style: TextStyle(
@@ -127,36 +121,44 @@ class TaskDetailPage extends ConsumerWidget {
               color: Colors.grey.shade600,
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             _formatDate(task.updatedAt),
-            style: TextStyle(fontSize: 14),
+            style: const TextStyle(fontSize: 14),
           ),
-          SizedBox(height: 32),
+          const SizedBox(height: 32),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: () {
-                final newStatus = isDone ? 'pending' : 'done';
-                ref.read(taskRepositoryProvider).updateTaskStatus(
-                  id: task.id,
-                  status: newStatus,
-                ).then((_) {
-                  ref.invalidate(taskDetailProvider(taskId));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        isDone ? 'Status diubah ke Pending' : 'Status diubah ke Done',
+              onPressed: () async {
+                final newStatus = task.isDone ? TaskStatus.pending : TaskStatus.done;
+                final result = await ref.read(taskListProvider.notifier).updateTaskStatus(
+                  task.id,
+                  newStatus,
+                );
+                result.when(
+                  success: (_) {
+                    ref.invalidate(taskDetailProvider(taskId));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          task.isDone ? 'Status diubah ke Pending' : 'Status diubah ke Done',
+                        ),
                       ),
-                    ),
-                  );
-                });
+                    );
+                  },
+                  failure: (failure) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(failure.message)),
+                    );
+                  },
+                );
               },
-              icon: Icon(isDone ? Icons.undo : Icons.check),
-              label: Text(isDone ? 'Tandai Pending' : 'Tandai Done'),
+              icon: Icon(task.isDone ? Icons.undo : Icons.check),
+              label: Text(task.isDone ? 'Tandai Pending' : 'Tandai Done'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: isDone ? Colors.orange : Colors.green,
-                padding: EdgeInsets.symmetric(vertical: 14),
+                backgroundColor: task.isDone ? Colors.orange : Colors.green,
+                padding: const EdgeInsets.symmetric(vertical: 14),
               ),
             ),
           ),
@@ -165,33 +167,51 @@ class TaskDetailPage extends ConsumerWidget {
     );
   }
 
-  void _showDeleteDialog(BuildContext context, WidgetRef ref, Task task) {
-    showDialog(
+  void _showDeleteDialog(BuildContext context, WidgetRef ref, TaskEntity task) {
+    showDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Hapus Task'),
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Hapus Task'),
         content: Text('Apakah Anda yakin ingin menghapus "${task.title}"?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Batal'),
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Batal'),
           ),
           TextButton(
-            onPressed: () {
-              ref.read(taskRepositoryProvider).deleteTask(task.id).then((_) {
-                Navigator.pop(context);
-                context.pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Task berhasil dihapus')),
-                );
-              });
+            onPressed: () async {
+              final navigator = Navigator.of(dialogContext);
+              final scaffoldMessenger = ScaffoldMessenger.of(context);
+              final goRouter = GoRouter.of(context);
+              final result = await ref.read(taskListProvider.notifier).deleteTask(task.id);
+              navigator.pop();
+              result.when(
+                success: (_) {
+                  goRouter.pop();
+                  scaffoldMessenger.showSnackBar(
+                    const SnackBar(content: Text('Task berhasil dihapus')),
+                  );
+                },
+                failure: (failure) {
+                  scaffoldMessenger.showSnackBar(
+                    SnackBar(content: Text(failure.message)),
+                  );
+                },
+              );
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: Text('Hapus'),
+            child: const Text('Hapus'),
           ),
         ],
       ),
     );
+  }
+
+  String _mapErrorToMessage(Object error) {
+    if (error is Failure) {
+      return error.message;
+    }
+    return 'Terjadi kesalahan yang tidak terduga';
   }
 
   String _formatDate(DateTime date) {

@@ -6,7 +6,7 @@ void main() {
   group('EmptyState', () {
     testWidgets('renders title and subtitle', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: Scaffold(
             body: EmptyState(
               title: 'No Tasks',
@@ -40,7 +40,7 @@ void main() {
 
     testWidgets('hides action button when onAction is null', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: Scaffold(
             body: EmptyState(
               title: 'No Tasks',
@@ -73,7 +73,7 @@ void main() {
     });
 
     testWidgets('retry button calls onRetry', (tester) async {
-      bool retried = false;
+      var retried = false;
 
       await tester.pumpWidget(
         MaterialApp(

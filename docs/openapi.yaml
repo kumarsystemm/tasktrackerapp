@@ -1,0 +1,445 @@
+openapi: 3.0.3
+info:
+  title: Task Tracker API
+  description: REST API for Task Tracker application
+  version: 1.0.0
+  contact:
+    name: Bangchan
+
+servers:
+  - url: http://localhost:8080/api
+    description: Local development
+  - url: http://10.0.2.2:8080/api
+    description: Android emulator (localhost)
+
+security:
+  - ApiKeyAuth: []
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for authentication
+
+  schemas:
+    Task:
+      type: object
+      required:
+        - id
+        - title
+        - description
+        - status
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          description: Unique identifier (UUID v4)
+        title:
+          type: string
+          maxLength: 255
+          description: Task title
+        description:
+          type: string
+          description: Task description
+        status:
+          type: string
+          enum:
+            - pending
+            - done
+          description: Task status
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp (RFC3339)
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp (RFC3339)
+
+    PaginationMeta:
+      type: object
+      required:
+        - page
+        - limit
+        - total
+        - total_pages
+      properties:
+        page:
+          type: integer
+          description: Current page number
+        limit:
+          type: integer
+          description: Items per page
+        total:
+          type: integer
+          description: Total number of items
+        total_pages:
+          type: integer
+          description: Total number of pages
+
+    PaginatedTasksData:
+      type: object
+      required:
+        - tasks
+        - pagination
+      properties:
+        tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/Task"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+
+    CreateTaskRequest:
+      type: object
+      required:
+        - title
+        - description
+      properties:
+        title:
+          type: string
+          maxLength: 255
+          description: Task title
+        description:
+          type: string
+          description: Task description
+
+    UpdateTaskRequest:
+      type: object
+      required:
+        - title
+        - description
+      properties:
+        title:
+          type: string
+          maxLength: 255
+          description: Task title
+        description:
+          type: string
+          description: Task description
+
+    UpdateStatusRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - pending
+            - done
+          description: New task status
+
+    TaskListResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/PaginatedTasksData"
+
+    TaskResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/Task"
+
+    DeleteResponse:
+      type: object
+      required:
+        - success
+        - message
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+
+    ErrorResponse:
+      type: object
+      required:
+        - success
+        - message
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        errors:
+          type: string
+          description: Detailed error information (optional)
+
+paths:
+  /tasks:
+    get:
+      summary: Get all tasks
+      description: Retrieve a paginated list of tasks with optional search and status filter.
+      operationId: getTasks
+      tags:
+        - Tasks
+      parameters:
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Search keyword for title/description
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - pending
+              - done
+          description: Filter by task status
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Page number
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Items per page
+      responses:
+        "200":
+          description: List of tasks retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskListResponse"
+        "400":
+          description: Invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    post:
+      summary: Create a new task
+      description: Create a new task with title and description. Status defaults to "pending".
+      operationId: createTask
+      tags:
+        - Tasks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTaskRequest"
+      responses:
+        "201":
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /tasks/{id}:
+    get:
+      summary: Get task by ID
+      description: Retrieve a single task by its UUID.
+      operationId: getTaskById
+      tags:
+        - Tasks
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Task UUID
+      responses:
+        "200":
+          description: Task retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskResponse"
+        "400":
+          description: Invalid UUID format
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    put:
+      summary: Update task
+      description: Update task title and description.
+      operationId: updateTask
+      tags:
+        - Tasks
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Task UUID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTaskRequest"
+      responses:
+        "200":
+          description: Task updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskResponse"
+        "400":
+          description: Invalid UUID or validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    delete:
+      summary: Delete task
+      description: Delete a task by its UUID.
+      operationId: deleteTask
+      tags:
+        - Tasks
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Task UUID
+      responses:
+        "200":
+          description: Task deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteResponse"
+        "400":
+          description: Invalid UUID format
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /tasks/{id}/status:
+    patch:
+      summary: Update task status
+      description: Update only the status of a task (pending or done).
+      operationId: updateTaskStatus
+      tags:
+        - Tasks
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Task UUID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateStatusRequest"
+      responses:
+        "200":
+          description: Task status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskResponse"
+        "400":
+          description: Invalid UUID or validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"

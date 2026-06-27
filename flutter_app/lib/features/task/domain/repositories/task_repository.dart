@@ -1,30 +1,33 @@
-import 'package:task_tracker/features/task/data/models/task_model.dart';
+import 'package:task_tracker/core/errors/result.dart';
+import 'package:task_tracker/features/task/domain/entities/task_entity.dart';
 
+/// Abstract repository interface di domain layer.
+/// Hanya reference domain entities, bukan data models.
 abstract class TaskRepository {
-  Future<PaginatedTasksResponse> getTasks({
+  Future<Result<PaginatedTasks>> getTasks({
     String? search,
     String? status,
     int page = 1,
     int limit = 10,
   });
 
-  Future<Task> getTaskById(String id);
+  Future<Result<TaskEntity>> getTaskById(String id);
 
-  Future<Task> createTask({
+  Future<Result<TaskEntity>> createTask({
     required String title,
     required String description,
   });
 
-  Future<Task> updateTask({
+  Future<Result<TaskEntity>> updateTask({
     required String id,
     required String title,
     required String description,
   });
 
-  Future<void> deleteTask(String id);
+  Future<Result<void>> deleteTask(String id);
 
-  Future<Task> updateTaskStatus({
+  Future<Result<TaskEntity>> updateTaskStatus({
     required String id,
-    required String status,
+    required TaskStatus status,
   });
 }

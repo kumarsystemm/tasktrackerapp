@@ -1,8 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:task_tracker/core/database/app_database.dart';
+import 'package:task_tracker/core/errors/failures.dart';
+import 'package:task_tracker/core/errors/result.dart';
 import 'package:task_tracker/core/network/connectivity_service.dart';
-import 'package:task_tracker/features/task/data/models/task_model.dart';
+import 'package:task_tracker/features/task/data/mappers/task_mapper.dart';
 import 'package:task_tracker/features/task/data/sources/task_remote_source.dart';
+import 'package:task_tracker/features/task/domain/entities/task_entity.dart';
 import 'package:task_tracker/features/task/domain/repositories/task_repository.dart';
 
 final taskRepositoryProvider = Provider<TaskRepository>((ref) {
@@ -13,13 +16,13 @@ final taskRepositoryProvider = Provider<TaskRepository>((ref) {
 });
 
 class TaskRepositoryImpl implements TaskRepository {
+
+  TaskRepositoryImpl(this._remoteSource, this._connectivity);
   final TaskRemoteSource _remoteSource;
   final ConnectivityService _connectivity;
 
-  TaskRepositoryImpl(this._remoteSource, this._connectivity);
-
   @override
-  Future<PaginatedTasksResponse> getTasks({
+  Future<Result<PaginatedTasks>> getTasks({
     String? search,
     String? status,
     int page = 1,
@@ -32,81 +35,112 @@ class TaskRepositoryImpl implements TaskRepository {
         page: page,
         limit: limit,
       );
-      await AppDatabase.insertTasks(response.tasks);
-      return response;
+      await AppDatabase.insertTasks(response.data.tasks);
+      return Result.success(TaskMapper.toPaginatedEntity(response));
     } catch (e) {
       if (await _connectivity.checkStatus() == ConnectivityStatus.offline) {
-        final localTasks = await AppDatabase.getAllTasks();
-        return PaginatedTasksResponse(
-          tasks: localTasks,
-          pagination: PaginationMeta(
-            page: 1,
-            limit: localTasks.length,
-            total: localTasks.length,
-            totalPages: 1,
-          ),
-        );
+        try {
+          final localTasks = await AppDatabase.getAllTasks();
+          final entities = TaskMapper.toEntityList(localTasks);
+          return Result.success(PaginatedTasks(
+            tasks: entities,
+            pagination: PaginationInfo(
+              page: 1,
+              limit: entities.length,
+              total: entities.length,
+              totalPages: 1,
+            ),
+          ),);
+        } catch (_) {
+          return Result.failure(const CacheFailure());
+        }
       }
-      rethrow;
+      return Result.failure(mapExceptionToFailure(e));
     }
   }
 
   @override
-  Future<Task> getTaskById(String id) async {
+  Future<Result<TaskEntity>> getTaskById(String id) async {
     try {
       final task = await _remoteSource.getTaskById(id);
       await AppDatabase.insertTask(task);
-      return task;
+      return Result.success(TaskMapper.toEntity(task));
     } catch (e) {
       if (await _connectivity.checkStatus() == ConnectivityStatus.offline) {
-        final localTask = await AppDatabase.getTaskById(id);
-        if (localTask != null) return localTask;
+        try {
+          final localTask = await AppDatabase.getTaskById(id);
+          if (localTask != null) {
+            return Result.success(TaskMapper.toEntity(localTask));
+          }
+        } catch (_) {
+          return Result.failure(const CacheFailure());
+        }
       }
-      rethrow;
+      return Result.failure(mapExceptionToFailure(e));
     }
   }
 
   @override
-  Future<Task> createTask({
+  Future<Result<TaskEntity>> createTask({
     required String title,
     required String description,
   }) async {
-    final task = await _remoteSource.createTask(
-      title: title,
-      description: description,
-    );
-    await AppDatabase.insertTask(task);
-    return task;
+    try {
+      final task = await _remoteSource.createTask(
+        title: title,
+        description: description,
+      );
+      await AppDatabase.insertTask(task);
+      return Result.success(TaskMapper.toEntity(task));
+    } catch (e) {
+      return Result.failure(mapExceptionToFailure(e));
+    }
   }
 
   @override
-  Future<Task> updateTask({
+  Future<Result<TaskEntity>> updateTask({
     required String id,
     required String title,
     required String description,
   }) async {
-    final task = await _remoteSource.updateTask(
-      id: id,
-      title: title,
-      description: description,
-    );
-    await AppDatabase.updateTask(task);
-    return task;
+    try {
+      final task = await _remoteSource.updateTask(
+        id: id,
+        title: title,
+        description: description,
+      );
+      await AppDatabase.updateTask(task);
+      return Result.success(TaskMapper.toEntity(task));
+    } catch (e) {
+      return Result.failure(mapExceptionToFailure(e));
+    }
   }
 
   @override
-  Future<void> deleteTask(String id) async {
-    await _remoteSource.deleteTask(id);
-    await AppDatabase.deleteTask(id);
+  Future<Result<void>> deleteTask(String id) async {
+    try {
+      await _remoteSource.deleteTask(id);
+      await AppDatabase.deleteTask(id);
+      return Result.success(null);
+    } catch (e) {
+      return Result.failure(mapExceptionToFailure(e));
+    }
   }
 
   @override
-  Future<Task> updateTaskStatus({
+  Future<Result<TaskEntity>> updateTaskStatus({
     required String id,
-    required String status,
+    required TaskStatus status,
   }) async {
-    final task = await _remoteSource.updateTaskStatus(id: id, status: status);
-    await AppDatabase.updateTask(task);
-    return task;
+    try {
+      final task = await _remoteSource.updateTaskStatus(
+        id: id,
+        status: status.value,
+      );
+      await AppDatabase.updateTask(task);
+      return Result.success(TaskMapper.toEntity(task));
+    } catch (e) {
+      return Result.failure(mapExceptionToFailure(e));
+    }
   }
 }

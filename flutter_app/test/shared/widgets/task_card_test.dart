@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:task_tracker/features/task/data/models/task_model.dart';
+import 'package:task_tracker/features/task/domain/entities/task_entity.dart';
 import 'package:task_tracker/shared/widgets/task_card.dart';
 
 void main() {
   group('TaskCard', () {
-    final testTask = Task(
+    final testTask = TaskEntity(
       id: 'test-id',
       title: 'Test Task Title',
       description: 'Test task description that is a bit longer',
-      status: 'pending',
+      status: TaskStatus.pending,
       createdAt: DateTime(2024, 1, 15),
       updatedAt: DateTime(2024, 1, 15),
     );
 
-    final doneTask = Task(
+    final doneTask = TaskEntity(
       id: 'done-id',
       title: 'Done Task',
       description: 'This task is completed',
-      status: 'done',
+      status: TaskStatus.done,
       createdAt: DateTime(2024, 1, 15),
       updatedAt: DateTime(2024, 1, 15),
     );
@@ -76,7 +76,7 @@ void main() {
     });
 
     testWidgets('checkbox calls onStatusChanged', (tester) async {
-      String? capturedStatus;
+      TaskStatus? capturedStatus;
 
       await tester.pumpWidget(
         MaterialApp(
@@ -92,11 +92,11 @@ void main() {
       );
 
       await tester.tap(find.byType(Checkbox));
-      expect(capturedStatus, 'done');
+      expect(capturedStatus, TaskStatus.done);
     });
 
     testWidgets('onTap is called when card is tapped', (tester) async {
-      bool tapped = false;
+      var tapped = false;
 
       await tester.pumpWidget(
         MaterialApp(

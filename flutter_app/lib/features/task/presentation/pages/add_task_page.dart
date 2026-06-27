@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:task_tracker/features/task/data/repositories/task_repository_impl.dart';
+import 'package:task_tracker/core/errors/failures.dart';
 import 'package:task_tracker/features/task/presentation/providers/task_provider.dart';
 
 class AddTaskPage extends ConsumerStatefulWidget {
-  final String? taskId;
-  final String? initialTitle;
-  final String? initialDescription;
 
   const AddTaskPage({
     super.key,
@@ -15,6 +12,9 @@ class AddTaskPage extends ConsumerStatefulWidget {
     this.initialTitle,
     this.initialDescription,
   });
+  final String? taskId;
+  final String? initialTitle;
+  final String? initialDescription;
 
   @override
   ConsumerState<AddTaskPage> createState() => _AddTaskPageState();
@@ -48,40 +48,55 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
     setState(() => _isLoading = true);
 
     try {
-      final repository = ref.read(taskRepositoryProvider);
+      final notifier = ref.read(taskListProvider.notifier);
 
-      if (isEditing) {
-        await repository.updateTask(
-          id: widget.taskId!,
-          title: _titleController.text.trim(),
-          description: _descController.text.trim(),
-        );
-      } else {
-        await repository.createTask(
-          title: _titleController.text.trim(),
-          description: _descController.text.trim(),
-        );
-      }
-
-      ref.read(taskListProvider.notifier).loadTasks(refresh: true);
+      final result = isEditing
+          ? await notifier.updateTask(
+              id: widget.taskId!,
+              title: _titleController.text.trim(),
+              description: _descController.text.trim(),
+            )
+          : await notifier.createTask(
+              title: _titleController.text.trim(),
+              description: _descController.text.trim(),
+            );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(isEditing ? 'Task berhasil diupdate' : 'Task berhasil ditambahkan'),
-          ),
+        result.when(
+          success: (_) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(isEditing ? 'Task berhasil diupdate' : 'Task berhasil ditambahkan'),
+              ),
+            );
+            context.pop();
+          },
+          failure: (failure) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(_mapFailureToMessage(failure))),
+            );
+          },
         );
-        context.pop();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
+          const SnackBar(content: Text('Terjadi kesalahan yang tidak terduga')),
         );
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  String _mapFailureToMessage(Failure failure) {
+    return switch (failure) {
+      NetworkFailure() => 'Tidak dapat terhubung ke server. Periksa koneksi Anda.',
+      ValidationFailure(:final message) => message,
+      ServerFailure(:final message) => message,
+      UnauthorizedFailure() => 'Akses ditolak. Silakan login kembali.',
+      _ => failure.message,
+    };
   }
 
   @override
@@ -91,7 +106,7 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
         title: Text(isEditing ? 'Edit Task' : 'Tambah Task'),
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: Column(
@@ -99,7 +114,7 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
             children: [
               TextFormField(
                 controller: _titleController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Judul Task',
                   hintText: 'Masukkan judul task',
                 ),
@@ -114,10 +129,10 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
                 },
                 textCapitalization: TextCapitalization.sentences,
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _descController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Deskripsi',
                   hintText: 'Masukkan deskripsi task',
                 ),
@@ -130,11 +145,11 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
                 },
                 textCapitalization: TextCapitalization.sentences,
               ),
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: _isLoading ? null : _submit,
                 child: _isLoading
-                    ? SizedBox(
+                    ? const SizedBox(
                         height: 20,
                         width: 20,
                         child: CircularProgressIndicator(

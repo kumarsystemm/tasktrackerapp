@@ -1,6 +1,7 @@
-import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-import 'package:task_tracker/features/task/data/models/task_model.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:task_tracker/api/models/task.dart' as api;
+import 'package:task_tracker/api/models/task_status.dart' as api;
 
 class AppDatabase {
   static Database? _database;
@@ -15,7 +16,7 @@ class AppDatabase {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, 'task_tracker.db');
 
-    return await openDatabase(
+    return openDatabase(
       path,
       version: 1,
       onCreate: _createDB,
@@ -35,7 +36,7 @@ class AppDatabase {
     ''');
   }
 
-  static Future<void> insertTask(Task task) async {
+  static Future<void> insertTask(api.Task task) async {
     final db = await database;
     await db.insert(
       'tasks',
@@ -43,7 +44,7 @@ class AppDatabase {
         'id': task.id,
         'title': task.title,
         'description': task.description,
-        'status': task.status,
+        'status': task.status.toJson(),
         'created_at': task.createdAt.toIso8601String(),
         'updated_at': task.updatedAt.toIso8601String(),
       },
@@ -51,7 +52,7 @@ class AppDatabase {
     );
   }
 
-  static Future<void> insertTasks(List<Task> tasks) async {
+  static Future<void> insertTasks(List<api.Task> tasks) async {
     final db = await database;
     final batch = db.batch();
     for (final task in tasks) {
@@ -61,7 +62,7 @@ class AppDatabase {
           'id': task.id,
           'title': task.title,
           'description': task.description,
-          'status': task.status,
+          'status': task.status.toJson(),
           'created_at': task.createdAt.toIso8601String(),
           'updated_at': task.updatedAt.toIso8601String(),
         },
@@ -71,41 +72,41 @@ class AppDatabase {
     await batch.commit(noResult: true);
   }
 
-  static Future<Task?> getTaskById(String id) async {
+  static Future<api.Task?> getTaskById(String id) async {
     final db = await database;
     final maps = await db.query('tasks', where: 'id = ?', whereArgs: [id]);
     if (maps.isEmpty) return null;
-    return Task(
-      id: maps[0]['id'] as String,
-      title: maps[0]['title'] as String,
-      description: maps[0]['description'] as String,
-      status: maps[0]['status'] as String,
-      createdAt: DateTime.parse(maps[0]['created_at'] as String),
-      updatedAt: DateTime.parse(maps[0]['updated_at'] as String),
+    return api.Task(
+      id: maps[0]['id']! as String,
+      title: maps[0]['title']! as String,
+      description: maps[0]['description']! as String,
+      status: api.TaskStatus.fromJson(maps[0]['status']! as String),
+      createdAt: DateTime.parse(maps[0]['created_at']! as String),
+      updatedAt: DateTime.parse(maps[0]['updated_at']! as String),
     );
   }
 
-  static Future<List<Task>> getAllTasks() async {
+  static Future<List<api.Task>> getAllTasks() async {
     final db = await database;
     final maps = await db.query('tasks', orderBy: 'created_at DESC');
-    return maps.map((map) => Task(
-      id: map['id'] as String,
-      title: map['title'] as String,
-      description: map['description'] as String,
-      status: map['status'] as String,
-      createdAt: DateTime.parse(map['created_at'] as String),
-      updatedAt: DateTime.parse(map['updated_at'] as String),
-    )).toList();
+    return maps.map((map) => api.Task(
+      id: map['id']! as String,
+      title: map['title']! as String,
+      description: map['description']! as String,
+      status: api.TaskStatus.fromJson(map['status']! as String),
+      createdAt: DateTime.parse(map['created_at']! as String),
+      updatedAt: DateTime.parse(map['updated_at']! as String),
+    ),).toList();
   }
 
-  static Future<void> updateTask(Task task) async {
+  static Future<void> updateTask(api.Task task) async {
     final db = await database;
     await db.update(
       'tasks',
       {
         'title': task.title,
         'description': task.description,
-        'status': task.status,
+        'status': task.status.toJson(),
         'updated_at': task.updatedAt.toIso8601String(),
       },
       where: 'id = ?',

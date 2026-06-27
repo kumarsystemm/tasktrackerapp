@@ -1,35 +1,33 @@
 import 'package:flutter/material.dart';
 
 class SearchFilterBar extends StatelessWidget {
-  final Function(String) onSearchChanged;
-  final Function(String?) onStatusFilterChanged;
-  final String? currentStatus;
 
   const SearchFilterBar({
-    super.key,
-    required this.onSearchChanged,
-    required this.onStatusFilterChanged,
+    required this.onSearchChanged, required this.onStatusFilterChanged, super.key,
     this.currentStatus,
   });
+  final void Function(String) onSearchChanged;
+  final void Function(String?) onStatusFilterChanged;
+  final String? currentStatus;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       child: Column(
         children: [
           TextField(
             decoration: InputDecoration(
               hintText: 'Cari task...',
-              prefixIcon: Icon(Icons.search),
+              prefixIcon: const Icon(Icons.search),
               suffixIcon: IconButton(
-                icon: Icon(Icons.clear),
+                icon: const Icon(Icons.clear),
                 onPressed: () => onSearchChanged(''),
               ),
             ),
             onChanged: onSearchChanged,
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -39,14 +37,14 @@ class SearchFilterBar extends StatelessWidget {
                   isSelected: currentStatus == null,
                   onTap: () => onStatusFilterChanged(null),
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 _FilterChip(
                   label: 'Pending',
                   isSelected: currentStatus == 'pending',
                   onTap: () => onStatusFilterChanged('pending'),
                   color: Colors.orange,
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 _FilterChip(
                   label: 'Done',
                   isSelected: currentStatus == 'done',
@@ -63,10 +61,6 @@ class SearchFilterBar extends StatelessWidget {
 }
 
 class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-  final Color? color;
 
   const _FilterChip({
     required this.label,
@@ -74,6 +68,10 @@ class _FilterChip extends StatelessWidget {
     required this.onTap,
     this.color,
   });
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
@@ -82,8 +80,8 @@ class _FilterChip extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: Duration(milliseconds: 200),
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected ? primaryColor : Colors.transparent,
           borderRadius: BorderRadius.circular(20),

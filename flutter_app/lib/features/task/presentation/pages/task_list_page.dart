@@ -41,7 +41,7 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
 
   void _onSearchChanged(String query) {
     _debounce?.cancel();
-    _debounce = Timer(Duration(milliseconds: 300), () {
+    _debounce = Timer(const Duration(milliseconds: 300), () {
       ref.read(searchQueryProvider.notifier).state = query;
       ref.read(taskListProvider.notifier).loadTasks(refresh: true);
     });
@@ -62,7 +62,7 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Task Tracker'),
+        title: const Text('Task Tracker'),
         actions: [
           IconButton(
             icon: Icon(
@@ -85,7 +85,7 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
           ),
           if (pagination != null)
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Row(
                 children: [
                   Text(
@@ -123,11 +123,11 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
                   onRefresh: () => ref.read(taskListProvider.notifier).loadTasks(refresh: true),
                   child: ListView.builder(
                     controller: _scrollController,
-                    padding: EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(16),
                     itemCount: tasks.length + (isLoadingMore ? 1 : 0),
                     itemBuilder: (context, index) {
                       if (index == tasks.length) {
-                        return Center(
+                        return const Center(
                           child: Padding(
                             padding: EdgeInsets.all(16),
                             child: CircularProgressIndicator(),
@@ -142,18 +142,21 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
                         onDelete: () {
                           ref.read(taskListProvider.notifier).deleteTask(task.id);
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Task berhasil dihapus')),
+                            const SnackBar(content: Text('Task berhasil dihapus')),
                           );
                         },
                         onStatusChanged: (status) {
-                          ref.read(taskListProvider.notifier).updateTaskStatus(task.id, status);
+                          ref.read(taskListProvider.notifier).updateTaskStatus(
+                            task.id,
+                            status,
+                          );
                         },
                       );
                     },
                   ),
                 );
               },
-              loading: () => SkeletonLoader(),
+              loading: () => const SkeletonLoader(),
               error: (error, stack) => ErrorState(
                 message: error.toString(),
                 onRetry: () => ref.read(taskListProvider.notifier).loadTasks(refresh: true),
@@ -164,7 +167,7 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/add-task'),
-        child: Icon(Icons.add),
+        child: const Icon(Icons.add),
       ),
     );
   }

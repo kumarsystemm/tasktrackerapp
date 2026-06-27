@@ -49,8 +49,8 @@ void main() {
         title: 'Roundtrip Task',
         description: 'Roundtrip Description',
         status: 'pending',
-        createdAt: DateTime(2024, 6, 15, 12, 0, 0),
-        updatedAt: DateTime(2024, 6, 15, 12, 0, 0),
+        createdAt: DateTime(2024, 6, 15, 12),
+        updatedAt: DateTime(2024, 6, 15, 12),
       );
 
       final restored = Task.fromJson(original.toJson());

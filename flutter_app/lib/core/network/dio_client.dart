@@ -13,13 +13,13 @@ final dioProvider = Provider<Dio>((ref) {
       'Accept': 'application/json',
       'X-API-Key': ApiConstants.apiKey,
     },
-  ));
+  ),);
 
   dio.interceptors.add(LogInterceptor(
     requestBody: true,
     responseBody: true,
     logPrint: (obj) => developer.log(obj.toString()),
-  ));
+  ),);
 
   return dio;
 });

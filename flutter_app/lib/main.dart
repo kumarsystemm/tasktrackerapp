@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:task_tracker/core/theme/app_theme.dart';
 import 'package:task_tracker/core/theme/theme_provider.dart';
 import 'package:task_tracker/features/task/presentation/pages/add_task_page.dart';
@@ -8,7 +9,6 @@ import 'package:task_tracker/features/task/presentation/pages/edit_task_page.dar
 import 'package:task_tracker/features/task/presentation/pages/splash_page.dart';
 import 'package:task_tracker/features/task/presentation/pages/task_detail_page.dart';
 import 'package:task_tracker/features/task/presentation/pages/task_list_page.dart';
-import 'package:go_router/go_router.dart';
 
 final goRouter = GoRouter(
   initialLocation: '/splash',
@@ -19,11 +19,11 @@ final goRouter = GoRouter(
     ),
     GoRoute(
       path: '/',
-      builder: (context, state) => TaskListPage(),
+      builder: (context, state) => const TaskListPage(),
     ),
     GoRoute(
       path: '/add-task',
-      builder: (context, state) => AddTaskPage(),
+      builder: (context, state) => const AddTaskPage(),
     ),
     GoRoute(
       path: '/task/:id',

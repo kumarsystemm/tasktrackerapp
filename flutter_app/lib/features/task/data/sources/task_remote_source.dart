@@ -1,89 +1,78 @@
-import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:task_tracker/core/constants/api_constants.dart';
+import 'package:task_tracker/api/export.dart' as api;
 import 'package:task_tracker/core/network/dio_client.dart';
-import 'package:task_tracker/features/task/data/models/task_model.dart';
 
+final tasksClientProvider = Provider<api.TasksClient>((ref) {
+  return api.TasksClient(ref.watch(dioProvider));
+});
+
+/// Remote source backed by the generated Retrofit client.
 final taskRemoteSourceProvider = Provider<TaskRemoteSource>((ref) {
-  return TaskRemoteSource(ref.watch(dioProvider));
+  return TaskRemoteSource(ref.watch(tasksClientProvider));
 });
 
 class TaskRemoteSource {
-  final Dio _dio;
+  TaskRemoteSource(this._client);
 
-  TaskRemoteSource(this._dio);
+  final api.TasksClient _client;
 
-  Future<PaginatedTasksResponse> getTasks({
+  Future<api.TaskListResponse> getTasks({
     String? search,
     String? status,
     int page = 1,
     int limit = 10,
   }) async {
-    final queryParams = <String, dynamic>{
-      'page': page,
-      'limit': limit,
-    };
-    if (search != null && search.isNotEmpty) {
-      queryParams['search'] = search;
-    }
-    if (status != null && status.isNotEmpty) {
-      queryParams['status'] = status;
-    }
-
-    final response = await _dio.get(
-      ApiConstants.tasks,
-      queryParameters: queryParams,
+    return _client.getTasks(
+      search: search,
+      status: status != null && status.isNotEmpty
+          ? api.Status.fromJson(status)
+          : null,
+      page: page,
+      limit: limit,
     );
-
-    return PaginatedTasksResponse.fromJson(response.data);
   }
 
-  Future<Task> getTaskById(String id) async {
-    final response = await _dio.get('${ApiConstants.tasks}/$id');
-    return Task.fromJson(response.data['data']);
+  Future<api.Task> getTaskById(String id) async {
+    final response = await _client.getTaskById(id: id);
+    return response.data;
   }
 
-  Future<Task> createTask({
+  Future<api.Task> createTask({
     required String title,
     required String description,
   }) async {
-    final response = await _dio.post(
-      ApiConstants.tasks,
-      data: {
-        'title': title,
-        'description': description,
-      },
+    final response = await _client.createTask(
+      body: api.CreateTaskRequest(title: title, description: description),
     );
-    return Task.fromJson(response.data['data']);
+    return response.data;
   }
 
-  Future<Task> updateTask({
+  Future<api.Task> updateTask({
     required String id,
     required String title,
     required String description,
   }) async {
-    final response = await _dio.put(
-      '${ApiConstants.tasks}/$id',
-      data: {
-        'title': title,
-        'description': description,
-      },
+    final response = await _client.updateTask(
+      id: id,
+      body: api.UpdateTaskRequest(title: title, description: description),
     );
-    return Task.fromJson(response.data['data']);
+    return response.data;
   }
 
   Future<void> deleteTask(String id) async {
-    await _dio.delete('${ApiConstants.tasks}/$id');
+    await _client.deleteTask(id: id);
   }
 
-  Future<Task> updateTaskStatus({
+  Future<api.Task> updateTaskStatus({
     required String id,
     required String status,
   }) async {
-    final response = await _dio.patch(
-      '${ApiConstants.tasks}/$id/status',
-      data: {'status': status},
+    final response = await _client.updateTaskStatus(
+      id: id,
+      body: api.UpdateStatusRequest(
+        status: api.UpdateStatusRequestStatus.fromJson(status),
+      ),
     );
-    return Task.fromJson(response.data['data']);
+    return response.data;
   }
 }
