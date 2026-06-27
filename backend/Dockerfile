@@ -10,13 +10,18 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o main ./cmd/main.go
 
 FROM alpine:latest
 
-RUN apk --no-cache add ca-certificates
+RUN apk --no-cache add ca-certificates \
+    && addgroup -S appgroup && adduser -S appuser -G appgroup
 
 ENV GOMAXPROCS=2
 
-WORKDIR /root/
+WORKDIR /home/appuser/
 
 COPY --from=builder /app/main .
+
+RUN chown -R appuser:appgroup /home/appuser/
+
+USER appuser
 
 EXPOSE 8080
 

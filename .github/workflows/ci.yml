@@ -7,6 +7,55 @@ on:
     branches: [main]
 
 jobs:
+  go-lint:
+    name: Go Lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+      - run: go vet ./...
+
+  go-test:
+    name: Go Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+      - run: go test ./... -v
+
+  go-build:
+    name: Go Build
+    runs-on: ubuntu-latest
+    needs: [go-lint, go-test]
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+      - run: CGO_ENABLED=0 go build -o main ./cmd/main.go
+
+  docker-build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: [go-lint, go-test]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker image
+        run: docker build -t task-tracker-backend ./backend
+
   flutter-analyze:
     name: Flutter Analyze
     runs-on: ubuntu-latest
