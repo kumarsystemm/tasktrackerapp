@@ -15,11 +15,24 @@ import (
 	"task-tracker/internal/task/routes"
 	"task-tracker/internal/task/service"
 	"task-tracker/pkg/logger"
+	_ "task-tracker/docs"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/swaggo/gin-swagger"
+	"github.com/swaggo/files"
 	"go.uber.org/zap"
 )
+
+// @title Task Tracker API
+// @version 1.0.0
+// @description REST API for Task Tracker application
+// @contact.name Bangchan
+// @host localhost:8080
+// @BasePath /api
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name X-API-Key
 
 func main() {
 	cfg := config.Load()
@@ -41,6 +54,8 @@ func main() {
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
+
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	api := r.Group("/api")
 	api.Use(middleware.ApiKeyAuth(cfg.APIKey))

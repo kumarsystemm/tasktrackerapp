@@ -20,6 +20,18 @@ func NewTaskHandler(service service.TaskService, logger *zap.Logger) *TaskHandle
 	return &TaskHandler{service: service, logger: logger}
 }
 
+// Create godoc
+// @Summary Create a new task
+// @Description Create a new task with title and description
+// @Tags Tasks
+// @Accept json
+// @Produce json
+// @Param request body dto.CreateTaskRequest true "Task to create"
+// @Success 201 {object} dto.TaskResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /tasks [post]
+// @Security ApiKeyAuth
 func (h *TaskHandler) Create(c *gin.Context) {
 	var req dto.CreateTaskRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -48,6 +60,20 @@ func (h *TaskHandler) Create(c *gin.Context) {
 	})
 }
 
+// GetAll godoc
+// @Summary Get all tasks
+// @Description Retrieve a paginated list of tasks with optional search and status filter
+// @Tags Tasks
+// @Produce json
+// @Param search query string false "Search keyword for title/description"
+// @Param status query string false "Filter by task status" Enums(pending, done)
+// @Param page query int false "Page number" default(1)
+// @Param limit query int false "Items per page" default(10)
+// @Success 200 {object} dto.TaskListResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /tasks [get]
+// @Security ApiKeyAuth
 func (h *TaskHandler) GetAll(c *gin.Context) {
 	var query dto.TaskQuery
 	if err := c.ShouldBindQuery(&query); err != nil {
@@ -76,6 +102,18 @@ func (h *TaskHandler) GetAll(c *gin.Context) {
 	})
 }
 
+// GetByID godoc
+// @Summary Get task by ID
+// @Description Retrieve a single task by its UUID
+// @Tags Tasks
+// @Produce json
+// @Param id path string true "Task UUID"
+// @Success 200 {object} dto.TaskResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 404 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /tasks/{id} [get]
+// @Security ApiKeyAuth
 func (h *TaskHandler) GetByID(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -110,6 +148,20 @@ func (h *TaskHandler) GetByID(c *gin.Context) {
 	})
 }
 
+// Update godoc
+// @Summary Update task
+// @Description Update task title and description
+// @Tags Tasks
+// @Accept json
+// @Produce json
+// @Param id path string true "Task UUID"
+// @Param request body dto.UpdateTaskRequest true "Task update data"
+// @Success 200 {object} dto.TaskResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 404 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /tasks/{id} [put]
+// @Security ApiKeyAuth
 func (h *TaskHandler) Update(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -154,6 +206,18 @@ func (h *TaskHandler) Update(c *gin.Context) {
 	})
 }
 
+// Delete godoc
+// @Summary Delete task
+// @Description Delete a task by its UUID
+// @Tags Tasks
+// @Produce json
+// @Param id path string true "Task UUID"
+// @Success 200 {object} dto.DeleteResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 404 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /tasks/{id} [delete]
+// @Security ApiKeyAuth
 func (h *TaskHandler) Delete(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -187,6 +251,20 @@ func (h *TaskHandler) Delete(c *gin.Context) {
 	})
 }
 
+// UpdateStatus godoc
+// @Summary Update task status
+// @Description Update only the status of a task (pending or done)
+// @Tags Tasks
+// @Accept json
+// @Produce json
+// @Param id path string true "Task UUID"
+// @Param request body dto.UpdateStatusRequest true "New status"
+// @Success 200 {object} dto.TaskResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 404 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /tasks/{id}/status [patch]
+// @Security ApiKeyAuth
 func (h *TaskHandler) UpdateStatus(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {

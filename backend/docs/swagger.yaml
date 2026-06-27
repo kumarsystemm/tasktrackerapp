@@ -1,0 +1,348 @@
+basePath: /api
+definitions:
+  dto.CreateTaskRequest:
+    properties:
+      description:
+        type: string
+      title:
+        maxLength: 255
+        type: string
+    required:
+    - description
+    - title
+    type: object
+  dto.DeleteResponse:
+    properties:
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  dto.ErrorResponse:
+    properties:
+      errors:
+        type: string
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  dto.PaginatedTasksResponse:
+    properties:
+      pagination:
+        $ref: '#/definitions/dto.PaginationMeta'
+      tasks:
+        items:
+          $ref: '#/definitions/model.Task'
+        type: array
+    type: object
+  dto.PaginationMeta:
+    properties:
+      limit:
+        type: integer
+      page:
+        type: integer
+      total:
+        type: integer
+      total_pages:
+        type: integer
+    type: object
+  dto.TaskListResponse:
+    properties:
+      data:
+        $ref: '#/definitions/dto.PaginatedTasksResponse'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  dto.TaskResponse:
+    properties:
+      data:
+        $ref: '#/definitions/model.Task'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  dto.UpdateStatusRequest:
+    properties:
+      status:
+        enum:
+        - pending
+        - done
+        type: string
+    required:
+    - status
+    type: object
+  dto.UpdateTaskRequest:
+    properties:
+      description:
+        type: string
+      title:
+        maxLength: 255
+        type: string
+    required:
+    - description
+    - title
+    type: object
+  model.Task:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      status:
+        $ref: '#/definitions/model.TaskStatus'
+      title:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  model.TaskStatus:
+    enum:
+    - pending
+    - done
+    type: string
+    x-enum-varnames:
+    - StatusPending
+    - StatusDone
+host: localhost:8080
+info:
+  contact:
+    name: Bangchan
+  description: REST API for Task Tracker application
+  title: Task Tracker API
+  version: 1.0.0
+paths:
+  /tasks:
+    get:
+      description: Retrieve a paginated list of tasks with optional search and status
+        filter
+      parameters:
+      - description: Search keyword for title/description
+        in: query
+        name: search
+        type: string
+      - description: Filter by task status
+        enum:
+        - pending
+        - done
+        in: query
+        name: status
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.TaskListResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get all tasks
+      tags:
+      - Tasks
+    post:
+      consumes:
+      - application/json
+      description: Create a new task with title and description
+      parameters:
+      - description: Task to create
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateTaskRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.TaskResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create a new task
+      tags:
+      - Tasks
+  /tasks/{id}:
+    delete:
+      description: Delete a task by its UUID
+      parameters:
+      - description: Task UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.DeleteResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete task
+      tags:
+      - Tasks
+    get:
+      description: Retrieve a single task by its UUID
+      parameters:
+      - description: Task UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.TaskResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get task by ID
+      tags:
+      - Tasks
+    put:
+      consumes:
+      - application/json
+      description: Update task title and description
+      parameters:
+      - description: Task UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Task update data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateTaskRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.TaskResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Update task
+      tags:
+      - Tasks
+  /tasks/{id}/status:
+    patch:
+      consumes:
+      - application/json
+      description: Update only the status of a task (pending or done)
+      parameters:
+      - description: Task UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: New status
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.TaskResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Update task status
+      tags:
+      - Tasks
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: X-API-Key
+    type: apiKey
+swagger: "2.0"

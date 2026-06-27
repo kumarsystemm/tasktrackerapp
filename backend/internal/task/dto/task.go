@@ -34,3 +34,28 @@ type PaginatedTasksResponse struct {
 	Tasks      []model.Task  `json:"tasks"`
 	Pagination PaginationMeta `json:"pagination"`
 }
+
+// Swagger response wrappers
+
+type TaskResponse struct {
+	Success bool        `json:"success"`
+	Message string      `json:"message"`
+	Data    model.Task  `json:"data"`
+}
+
+type TaskListResponse struct {
+	Success bool                  `json:"success"`
+	Message string                `json:"message"`
+	Data    PaginatedTasksResponse `json:"data"`
+}
+
+type ErrorResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+	Errors  string `json:"errors,omitempty"`
+}
+
+type DeleteResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+}
